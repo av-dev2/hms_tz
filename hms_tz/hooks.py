@@ -7,7 +7,7 @@ app_publisher = "Aakvatech"
 app_description = "HMS TZ"
 app_icon = "octicon octicon-file-directory"
 app_color = "grey"
-app_email = "info@aakvatech.com"
+app_email = "['EMAIL_ADDRESS']"
 app_license = "MIT"
 
 
@@ -95,12 +95,22 @@ after_install = "hms_tz.install.after_install"
 after_migrate = [
     "hms_tz.patches.custom_fields.create_custom_fields.execute",
     "hms_tz.patches.property_setter.create_property_setters.execute",
+    "hms_tz.security.settings.apply_security_settings",
 ]
 
 
 # Login
 # -----
 on_session_creation = "hms_tz.api.login.on_session_creation"
+
+
+# Security
+# --------
+before_request = [
+    "hms_tz.security.request.disable_traceback_leakage",
+    "hms_tz.security.request.block_unused_routes",
+]
+after_request = ["hms_tz.security.headers.apply_security_headers"]
 
 
 # Desk Notifications
@@ -134,6 +144,9 @@ on_session_creation = "hms_tz.api.login.on_session_creation"
 # Hook on document methods and events
 
 doc_events = {
+    "System Settings": {
+        "validate": "hms_tz.security.settings.enforce_on_save",
+    },
     "Patient Appointment": {
         "before_insert": "hms_tz.nhif.api.patient_appointment.before_insert",
         "validate": "hms_tz.nhif.api.patient_appointment.make_next_doc",
@@ -332,4 +345,6 @@ before_tests = "hms_tz.install.before_tests"
 #
 # auto_cancel_exempted_doctypes = ["Auto Repeat"]
 
-website_route_rules = [{'from_route': '/frontend/<path:app_path>', 'to_route': 'frontend'}, {'from_route': '/frontend/<path:app_path>', 'to_route': 'frontend'},]
+website_route_rules = [
+    {"from_route": "/frontend/<path:app_path>", "to_route": "frontend"},
+]
