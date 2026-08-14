@@ -33,11 +33,14 @@ class TestSingleDeviceLogin(FrappeTestCase):
             "hms_tz_sessions_cleared", user="nurse@example.com", after_commit=True
         )
 
-    def test_guest_sessions_are_not_touched(self):
+    def test_guest_sessions_are_also_cleared(self):
+        """Guest is session-limited like any other user; only Administrator is exempt."""
         with patch("hms_tz.api.login.clear_sessions") as clear_sessions:
             on_session_creation(login_manager_for("Guest"))
 
-        clear_sessions.assert_not_called()
+        clear_sessions.assert_called_once_with(
+            user="Guest", keep_current=True, force=True
+        )
 
     def test_administrator_sessions_are_not_touched(self):
         with patch("hms_tz.api.login.clear_sessions") as clear_sessions:
