@@ -70,35 +70,20 @@ frappe.ui.form.on("Clinical Procedure Template", {
         },
         callback: function (data) {
           if (data.message) {
-            if (
-              data.message.check_lists &&
-              data.message.check_lists.length > 0
-            ) {
-              frm.set_value("nursing_tasks", "");
-              for (let i = 0; i < data.message.check_lists.length; i++) {
-                var nursing_task_item = frappe.model.add_child(
+            const check_lists = data.message.check_lists;
+            if (check_lists && check_lists.length > 0) {
+              frm.clear_table("nursing_tasks");
+              for (const check_list of check_lists) {
+                const nursing_task_item = frappe.model.add_child(
                   frm.doc,
                   "Clinical Procedure Nursing Task",
                   "nursing_tasks"
                 );
-                frappe.model.set_value(
-                  nursing_task_item.doctype,
-                  nursing_task_item.name,
-                  "check_list",
-                  data.message.check_lists[i]["check_list"]
-                );
-                frappe.model.set_value(
-                  nursing_task_item.doctype,
-                  nursing_task_item.name,
-                  "task",
-                  data.message.check_lists[i]["task"]
-                );
-                frappe.model.set_value(
-                  nursing_task_item.doctype,
-                  nursing_task_item.name,
-                  "expected_time",
-                  data.message.check_lists[i]["expected_time"]
-                );
+                Object.assign(nursing_task_item, {
+                  check_list: check_list.check_list,
+                  task: check_list.task,
+                  expected_time: check_list.expected_time,
+                });
               }
             }
             frm.refresh_field("nursing_tasks");
