@@ -2,8 +2,8 @@
 # For license information, please see license.txt
 
 import calendar
+import io
 import json
-import os
 import uuid
 from datetime import datetime
 
@@ -188,7 +188,7 @@ class JubileePatientClaim(Document):
             self.company,
             "jubilee_provider_id",
         )
-        self.folio_id = uuid.uuid1()
+        self.folio_id = str(uuid.uuid4())
         self.posting_date = nowdate()
         self.serial_no = cint(self.name[-9:])
         self.item_crt_by = get_fullname(frappe.session.user)
@@ -1034,7 +1034,7 @@ class JubileePatientClaim(Document):
             entities.DateDischarged = (
                 str(self.date_discharge) + " " + str(self.discharge_time)
             )
-        entities.PractitionerNo = ", ".join([d.mct_code for d in self.practitioners if d.mct_code]),
+        entities.PractitionerNo = ", ".join([d.mct_code for d in self.practitioners if d.mct_code])
         # entities.PractitionerName = self.practitioner_name
         entities.ProviderID = self.provider_id
         entities.ClinicalNotes = self.clinical_notes
@@ -1335,14 +1335,15 @@ def download_multi_pdf(doctype, name, print_format=None, no_letterhead=0):
     return read_multi_pdf(output)
 
 
-def read_multi_pdf(output):
-    fname = os.path.join("/tmp", f"frappe-pdf-{frappe.generate_hash()}.pdf")
-    output.write(open(fname, "wb"))
+def read_multi_pdf(output) -> bytes:
+    """Serialise the merged claim PDF in memory.
 
-    with open(fname, "rb") as fileobj:
-        filedata = fileobj.read()
-
-    return filedata
+    Claim PDFs carry patient data, so they must not be written to a shared
+    temporary directory. The bytes are identical to the previous file round-trip.
+    """
+    with io.BytesIO() as stream:
+        output.write(stream)
+        return stream.getvalue()
 
 
 def get_claim_pdf_file(doc):
