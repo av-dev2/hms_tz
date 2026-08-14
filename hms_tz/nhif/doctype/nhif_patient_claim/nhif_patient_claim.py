@@ -5,7 +5,6 @@
 from __future__ import unicode_literals
 
 import json
-import os
 
 import frappe
 from frappe import _
@@ -23,7 +22,6 @@ from frappe.utils import (
     time_diff_in_seconds,
 )
 from frappe.utils.pdf import get_pdf
-from PyPDF2 import PdfFileWriter
 
 from hms_tz.hms_tz.doctype.insurance_folio_counter.insurance_folio_counter import get_or_create_folio_counter
 from hms_tz.nhif.api.healthcare_utils import get_approval_number_from_LRPMT, to_base64
@@ -961,89 +959,6 @@ def get_nhif_refcode(item_code, company):
         frappe.throw(_(f"Item {item_code} has not NHIF Code Reference"))
 
     return ref_code
-
-
-def generate_pdf(doc):
-    file_list = frappe.db.get_all(
-        "File",
-        filters={
-            "attached_to_doctype": "NHIF Patient Claim",
-            "file_name": str(doc.name + ".pdf"),
-        },
-    )
-    if file_list:
-        patientfile = frappe.get_cached_doc("File", file_list[0].name)
-        if patientfile:
-            pdf = patientfile.get_content()
-            return to_base64(pdf)
-
-    data_list = []
-    data = doc.patient_encounters
-
-    for i in data:
-        data_list.append(i.name)
-
-    doctype = dict({"Patient Encounter": data_list})
-
-    print_format = ""
-    default_print_format = frappe.db.get_cached_value(
-        "Property Setter",
-        dict(property="default_print_format", doc_type="Patient Encounter"),
-        "value",
-    )
-    if default_print_format:
-        print_format = default_print_format
-    else:
-        print_format = "Patient File"
-
-    pdf = download_multi_pdf(doctype, doc.name, print_format=print_format, no_letterhead=1)
-    if pdf:
-        ret = frappe.get_doc(
-            {
-                "doctype": "File",
-                "attached_to_doctype": "NHIF Patient Claim",
-                "attached_to_name": doc.name,
-                "folder": "Home/Attachments",
-                "file_name": doc.name + ".pdf",
-                "file_url": "/private/files/" + doc.name + ".pdf",
-                "content": pdf,
-                "is_private": 1,
-            }
-        )
-        ret.save(ignore_permissions=1)
-        # ret.db_update()
-        base64_data = to_base64(pdf)
-        return base64_data
-
-
-def download_multi_pdf(doctype, name, print_format=None, no_letterhead=0):
-    output = PdfFileWriter()
-    if isinstance(doctype, dict):
-        for doctype_name in doctype:
-            for doc_name in doctype[doctype_name]:
-                try:
-                    output = frappe.get_print(
-                        doctype_name,
-                        doc_name,
-                        print_format,
-                        as_pdf=True,
-                        output=output,
-                        no_letterhead=no_letterhead,
-                    )
-                except Exception:
-                    frappe.log_error(frappe.get_traceback())
-
-    return read_multi_pdf(output)
-
-
-def read_multi_pdf(output):
-    fname = os.path.join("/tmp", f"frappe-pdf-{frappe.generate_hash()}.pdf")
-    output.write(open(fname, "wb"))
-
-    with open(fname, "rb") as fileobj:
-        filedata = fileobj.read()
-
-    return filedata
 
 
 def get_claim_pdf_file(doc):
