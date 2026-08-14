@@ -75,6 +75,9 @@ class HMSTZSetting(Document):
 			"Content-Type": "application/x-www-form-urlencoded",
 		}
 
+		# client_secret does not expire, so it must never reach the response log.
+		log_payload = {**payload, "client_secret": "***"}
+
 		url = f"{self.nhif_token_url}"
 
 		for i in range(3):
@@ -89,7 +92,7 @@ class HMSTZSetting(Document):
 						request_type="Token",
 						request_url=url,
 						request_header=headers,
-						request_body=payload,
+						request_body=log_payload,
 						response_data=data,
 						status_code=r.status_code,
 						company=self.company
@@ -111,7 +114,7 @@ class HMSTZSetting(Document):
 						request_type="Token",
 						request_url=url,
 						request_header=headers,
-						request_body=payload,
+						request_body=log_payload,
 						status_code=r.status_code,
 						company=self.company
 					)
@@ -139,6 +142,9 @@ class HMSTZSetting(Document):
 			"providerid": self.jubilee_provider_id
 		}
 
+		# The password does not expire, so it must never reach the response log.
+		log_payload = {**payload, "password": "***"}
+
 		headers = {}
 		# {
 		# 	"Accept": "application/json",
@@ -161,7 +167,7 @@ class HMSTZSetting(Document):
 						request_type="Token",
 						request_url=url,
 						request_header=headers,
-						request_body=payload,
+						request_body=log_payload,
 						response_data=data,
 						status_code=r.status_code,
 						company=self.company
@@ -189,7 +195,7 @@ class HMSTZSetting(Document):
 						request_type="Token",
 						request_url=url,
 						request_header=headers,
-						request_body=payload,
+						request_body=log_payload,
 						response_data=data,
 						status_code=r.status_code,
 						company=self.company,
