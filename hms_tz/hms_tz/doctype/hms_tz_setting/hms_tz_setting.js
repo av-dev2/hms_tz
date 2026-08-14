@@ -90,7 +90,7 @@ frappe.ui.form.on("HMS TZ Setting", {
       frm.save();
     }
 
-    if (frm.doc.enable_nhif_token === 0) {
+    if (frm.doc.enable_nhif_api === 0) {
       frappe.msgprint(__("Please Enable NHIF API to proceed.."));
       return;
     }
